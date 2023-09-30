@@ -1,0 +1,21 @@
+name: Check for upstream changes and trigger build
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # 每小时运行一次
+
+jobs:
+  check-upstream:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+        repository: facebookresearch/detectron  # 上游仓库
+        ref: main  # 上游仓库的分支
+
+    - name: Check for new commits
+      run: |
+        # 你的脚本来检查新的提交
+        # 如果发现新的提交，你可以发送一个请求到你的仓库来触发一个新的构建
