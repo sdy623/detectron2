@@ -1,0 +1,57 @@
+name: Conda Auto Build
+
+on:
+  push:
+    branches:
+      - main  
+
+jobs:
+  build_ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup CUDA
+      - uses: Jimver/cuda-toolkit@v0.2.11
+        id: cuda-toolkit
+        with:
+          cuda: '11.8.0'
+          
+      - name: Check CUDA Version
+        run: |
+          echo "Installed cuda version is: ${{ steps.cuda-toolkit.outputs.cuda }}"
+          echo "Cuda install location: ${{ steps.cuda-toolkit.outputs.CUDA_PATH }}"
+          nvcc -V
+          
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Conda Build and Publish on Ubuntu
+        uses: fcakyon/conda-publish-action@v1.3
+        with:
+          subdir: ./recipe  # Sub-directory with conda recipe, optional, default is .
+          anacondatoken: ${{ secrets.ANACONDA_TOKEN }}  # Anaconda access token, optional
+          platforms: 'linux'  # Platforms to publish [osx/linux/win], optional, default is osx linux
+
+  build_windows:
+    runs-on: windows-latest
+    steps:
+      - name: Setup CUDA
+      - uses: Jimver/cuda-toolkit@v0.2.11
+        id: cuda-toolkit
+        with:
+          cuda: '11.8.0'
+          
+      - name: Check CUDA Version
+        run: |
+          echo "Installed cuda version is: ${{ steps.cuda-toolkit.outputs.cuda }}"
+          echo "Cuda install location: ${{ steps.cuda-toolkit.outputs.CUDA_PATH }}"
+          nvcc -V
+          
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Conda Build and Publish on Windows
+        uses: fcakyon/conda-publish-action@v1.3
+        with:
+          subdir: ./recipe  # Sub-directory with conda recipe, optional, default is .
+          anacondatoken: ${{ secrets.ANACONDA_TOKEN }}  # Anaconda access token, optional
+          platforms: 'win'  # Platforms to publish [osx/linux/win], optional, default is osx linux
