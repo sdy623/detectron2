@@ -1,0 +1,11 @@
+c_compiler: vs2022
+cxx_compiler: vs2022
+channel_sources: defaults, pytorch, conda-forge, nvidia, sdy623
+channel_targets: sdy623 conda-forge main
+python:
+  - 3.9
+  - 3.10
+  - 3.11
+cuda_compiler_version:  
+  - None 
+  - 11.8

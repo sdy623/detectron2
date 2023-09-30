@@ -1,0 +1,107 @@
+package:
+  name: detectron2
+  version:  {{ environ['GIT_TAG'] }}+{{ environ['GIT_COMMIT'][:8] }}
+
+source:
+  git_url: https://github.com/facebookresearch/detectron2.git
+  git_rev: 60944b7e42f59f090e9f1d8ecdee1e43b7ceff75
+build:
+  skip: true  # [py2k]
+  script: 
+    - "{{ PYTHON }} setup.py build"
+    - "{{ PYTHON }} -m pip install . -vv"
+  script_env:
+    - FORCE_CUDA=1  # [cuda_compiler_version == '11.8']
+
+
+outputs:
+  - name: detectron2
+    build:
+      number: 0
+      string: "py{{ py }}_cpu"
+  - name: detectron2
+    build:
+      number: 1
+      string: "py{{ py }}_cuda{{ cuda_compiler_version }}"  # [cuda_compiler_version == '11.8']
+
+requirements:
+  build:
+    - {{ compiler('c') }}
+    - {{ compiler('cxx') }}
+  host:
+    - python
+    - pip
+    - pytorch >=1.8.0=py*_cuda11.8_cudnn*  # [cuda_compiler_version == '11.8']
+    - pytorch >=1.8.0=*cpu*  # [cuda_compiler_version == 'None']
+    - pytorch-cuda=11.8  # [cuda_compiler_version == '11.8']
+    - setuptools
+    - wheel
+    - pytest
+    - ninja
+    - jinja2
+  run:
+    - python
+    - pytorch >=1.8.0=py*_cuda11.8_cudnn*  # [cuda_compiler_version == '11.8']
+    - pytorch >=1.8.0=*cpu*  # [cuda_compiler_version == 'None']
+    - pytorch-cuda=11.8  # [cuda_compiler_version == '11.8']
+    - pillow >=7.1,<10.0
+    - matplotlib-base
+    - pycocotools >=2.0.2
+    - termcolor >=1.1
+    - yacs >=0.1.8
+    - tabulate
+    - cloudpickle
+    - tqdm >4.29.0
+    - tensorboard
+    - fvcore >=0.1.5,<0.1.6
+    - iopath >=0.1.7,<0.1.10
+    - future
+    - pydot
+    - dataclasses  # [py<37]
+    - omegaconf >=2.1
+    - hydra-core >=1.1
+    - black ==21.4b2
+  run_constrained:
+    - opencv
+    - scipy>1.5.1
+    - pygments
+    - psutil
+    - fairscale
+
+test:
+  imports:
+    - detectron2
+  commands:
+    - python -c "from detectron2 import _C"  # [cuda_compiler_version == '11.8']
+    - python run_tests.py
+  files:
+    - ./run_tests.py
+  requires:
+    - pip
+  source_files:
+    - tests
+  requires:
+    - torchvision=0.15.2=py*_cu118  # [cuda_compiler_version == '11.8']
+    - torchvision=0.15.2=py*_cpu  # [cuda_compiler_version == 'None']
+    - libopencv=4.7.0=py*
+    - opencv=4.7.0=py*
+    - py-opencv=4.7.0=py*
+    - pytest
+    - mock
+    - scipy=1.11.3=py*
+    - shapely=2.0.1=py*
+
+
+about:
+  description: Detectron2 is a platform for object detection, segmentation and other visual recognition tasks.
+  dev_url: https://github.com/facebookresearch/detectron2
+  doc_url: https://detectron2.readthedocs.io/en/latest/
+  home: https://github.com/facebookresearch/detectron2
+  license: Apache-2.0
+  license_family: APACHE
+  license_file: LICENSE
+  summary: Detectron2 is a platform for object detection, segmentation and other visual recognition tasks.
+
+extra:
+  recipe-maintainers:
+    - sdy623
