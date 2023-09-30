@@ -9,49 +9,67 @@ jobs:
   build_ubuntu:
     runs-on: ubuntu-latest
     steps:
-      - name: Setup CUDA
-      - uses: Jimver/cuda-toolkit@v0.2.11
-        id: cuda-toolkit
-        with:
-          cuda: '11.8.0'
-          
-      - name: Check CUDA Version
-        run: |
-          echo "Installed cuda version is: ${{ steps.cuda-toolkit.outputs.cuda }}"
-          echo "Cuda install location: ${{ steps.cuda-toolkit.outputs.CUDA_PATH }}"
-          nvcc -V
-          
       - name: Checkout Code
         uses: actions/checkout@v2
+        
+      - name: Set GIT_TAG and GIT_COMMIT
+        run: |
+          echo "GIT_TAG=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
+          echo "GIT_COMMIT=$(git rev-parse HEAD)" >> $GITHUB_ENV
+          
+      - name: Setup Miniconda
+        id: setup-miniconda
+        # You may pin to the exact commit or the version.
+        # uses: conda-incubator/setup-miniconda@3b0f2504dd76ef23b6d31f291f4913fb60ab5ff3
+        uses: conda-incubator/setup-miniconda@v2.2.0
+        
+      - name: Configure Miniconda
+        run: |
+          conda install --yes -n base conda-libmamba-solver conda-build conda-verify
+          conda config --set solver libmamba
 
-      - name: Conda Build and Publish on Ubuntu
-        uses: fcakyon/conda-publish-action@v1.3
-        with:
-          subdir: ./recipe  # Sub-directory with conda recipe, optional, default is .
-          anacondatoken: ${{ secrets.ANACONDA_TOKEN }}  # Anaconda access token, optional
-          platforms: 'linux'  # Platforms to publish [osx/linux/win], optional, default is osx linux
+      - name: Setup CUDA
+        run: conda install --yes -c nvidia -c conda-forge cudatoolkit=11.8 cudnn nvcc_win-64=11.8 cuda-tools=11.8 cuda-nvcc=11.8 
+        id: cuda-toolkit
+          
+      - name: Conda Build and Publish
+        run: |
+          export TORCH_CUDA_ARCH_LIST="3.5;5.0;6.0;6.1;7.0;7.5;8.0;8.6+PTX"
+          export CUDA_HOME="/usr/miniconda3"
+          conda build ./recipe -c pytorch -c nvidia -c conda-forge 
 
   build_windows:
     runs-on: windows-latest
     steps:
-      - name: Setup CUDA
-      - uses: Jimver/cuda-toolkit@v0.2.11
-        id: cuda-toolkit
-        with:
-          cuda: '11.8.0'
-          
-      - name: Check CUDA Version
-        run: |
-          echo "Installed cuda version is: ${{ steps.cuda-toolkit.outputs.cuda }}"
-          echo "Cuda install location: ${{ steps.cuda-toolkit.outputs.CUDA_PATH }}"
-          nvcc -V
-          
       - name: Checkout Code
         uses: actions/checkout@v2
-
-      - name: Conda Build and Publish on Windows
-        uses: fcakyon/conda-publish-action@v1.3
-        with:
-          subdir: ./recipe  # Sub-directory with conda recipe, optional, default is .
-          anacondatoken: ${{ secrets.ANACONDA_TOKEN }}  # Anaconda access token, optional
-          platforms: 'win'  # Platforms to publish [osx/linux/win], optional, default is osx linux
+        
+      - name: Fetch all history for all tags and branches
+        run: git fetch --unshallow
+        
+      - name: Set GIT_TAG and GIT_COMMIT
+        run: |
+          echo "GIT_TAG=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
+          echo "GIT_COMMIT=$(git rev-parse HEAD)" >> $GITHUB_ENV
+          
+      - name: Setup Miniconda
+        id: setup-miniconda
+        # You may pin to the exact commit or the version.
+        # uses: conda-incubator/setup-miniconda@3b0f2504dd76ef23b6d31f291f4913fb60ab5ff3
+        uses: conda-incubator/setup-miniconda@v2.2.0
+        
+      - name: Configure Miniconda
+        run: |
+          conda install --yes -n base conda-libmamba-solver conda-build conda-verify
+          conda config --set solver libmamba
+          
+      - name: Setup CUDA
+        run: conda install --yes -c nvidia -c conda-forge cudatoolkit=11.8 cudnn nvcc_win-64=11.8 cuda-tools=11.8 cuda-nvcc=11.8 
+        id: cuda-toolkit
+          
+      - name: Conda Build and Publish
+        run: |
+          $Env:TORCH_CUDA_ARCH_LIST="3.5;5.0;6.0;6.1;7.0;7.5;8.0;8.6+PTX"
+          $Env:CUDA_HOME="C:/miniconda3"
+          conda build ./recipe -c pytorch -c nvidia -c conda-forge 
+        shell: powershell
